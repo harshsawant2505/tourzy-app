@@ -1,81 +1,84 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { useNavigation } from '@react-navigation/core';
+import { useFocusEffect, useNavigation } from '@react-navigation/core';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { auth, db } from '../firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const placesData = [
-  {
-    id: 1,
-    name: "Cabo De Rama",
-    location: "Canacona, Goa",
-    rating: 4.8,
-    description: "An ancient fort, an old Portuguese church, a short trek",
-    image: "https://images.unsplash.com/photo-1609920658906-8223bd289001?w=300",
-    tag: "Local Gem",
-    tagColor: "green",
-    crowdLevel: "low",
-    crowdColor: "green"
-  },
-  {
-    id: 2,
-    name: "Old Goa Church",
-    location: "Old Goa, Goa",
-    rating: 4.7,
-    description: "An ancient fort, an old Portuguese church, a short trek",
-    image: "https://images.unsplash.com/photo-1609920658906-8223bd289001?w=300",
-    tag: "Religious",
-    tagColor: "yellow",
-    crowdLevel: "medium",
-    crowdColor: "yellow"
-  },
-  {
-    id: 3,
-    name: "Cabo De Rama",
-    location: "Canacona, Goa",
-    rating: 4.9,
-    description: "An ancient fort, an old Portuguese church, a short trek",
-    image: "https://images.unsplash.com/photo-1609920658906-8223bd289001?w=300",
-    tag: "Local Gem",
-    tagColor: "green",
-    crowdLevel: "high",
-    crowdColor: "red"
-  },
-  {
-    id: 4,
-    name: "Dudhsagar Falls",
-    location: "Mollem, Goa",
-    rating: 4.6,
-    description: "Majestic four-tiered waterfall, perfect for nature lovers",
-    image: "https://images.unsplash.com/photo-1609920658906-8223bd289001?w=300",
-    tag: "Adventure",
-    tagColor: "blue",
-    crowdLevel: "high",
-    crowdColor: "red"
-  },
-  {
-    id: 5,
-    name: "Chapora Fort",
-    location: "Vagator, Goa",
-    rating: 4.5,
-    description: "Famous fort with panoramic views, featured in Bollywood",
-    image: "https://images.unsplash.com/photo-1609920658906-8223bd289001?w=300",
-    tag: "Historical",
-    tagColor: "purple",
-    crowdLevel: "medium",
-    crowdColor: "yellow"
-  },
-  {
-    id: 6,
-    name: "Palolem Beach",
-    location: "Canacona, Goa",
-    rating: 4.8,
-    description: "Crescent-shaped beach with calm waters and scenic beauty",
-    image: "https://images.unsplash.com/photo-1609920658906-8223bd289001?w=300",
-    tag: "Beach",
-    tagColor: "blue",
-    crowdLevel: "medium",
-    crowdColor: "yellow"
-  }
-];
+// const placesData = [
+//   {
+//     id: 1,
+//     name: "Cabo De Rama",
+//     location: "Canacona, Goa",
+//     rating: 4.8,
+//     description: "An ancient fort, an old Portuguese church, a short trek",
+//     image: "https://images.unsplash.com/photo-1609920658906-8223bd289001?w=300",
+//     tag: "Local Gem",
+//     tagColor: "green",
+//     crowdLevel: "low",
+//     crowdColor: "green"
+//   },
+//   {
+//     id: 2,
+//     name: "Old Goa Church",
+//     location: "Old Goa, Goa",
+//     rating: 4.7,
+//     description: "An ancient fort, an old Portuguese church, a short trek",
+//     image: "https://images.unsplash.com/photo-1609920658906-8223bd289001?w=300",
+//     tag: "Religious",
+//     tagColor: "yellow",
+//     crowdLevel: "medium",
+//     crowdColor: "yellow"
+//   },
+//   {
+//     id: 3,
+//     name: "Cabo De Rama",
+//     location: "Canacona, Goa",
+//     rating: 4.9,
+//     description: "An ancient fort, an old Portuguese church, a short trek",
+//     image: "https://images.unsplash.com/photo-1609920658906-8223bd289001?w=300",
+//     tag: "Local Gem",
+//     tagColor: "green",
+//     crowdLevel: "high",
+//     crowdColor: "red"
+//   },
+//   {
+//     id: 4,
+//     name: "Dudhsagar Falls",
+//     location: "Mollem, Goa",
+//     rating: 4.6,
+//     description: "Majestic four-tiered waterfall, perfect for nature lovers",
+//     image: "https://images.unsplash.com/photo-1609920658906-8223bd289001?w=300",
+//     tag: "Adventure",
+//     tagColor: "blue",
+//     crowdLevel: "high",
+//     crowdColor: "red"
+//   },
+//   {
+//     id: 5,
+//     name: "Chapora Fort",
+//     location: "Vagator, Goa",
+//     rating: 4.5,
+//     description: "Famous fort with panoramic views, featured in Bollywood",
+//     image: "https://images.unsplash.com/photo-1609920658906-8223bd289001?w=300",
+//     tag: "Historical",
+//     tagColor: "purple",
+//     crowdLevel: "medium",
+//     crowdColor: "yellow"
+//   },
+//   {
+//     id: 6,
+//     name: "Palolem Beach",
+//     location: "Canacona, Goa",
+//     rating: 4.8,
+//     description: "Crescent-shaped beach with calm waters and scenic beauty",
+//     image: "https://images.unsplash.com/photo-1609920658906-8223bd289001?w=300",
+//     tag: "Beach",
+//     tagColor: "blue",
+//     crowdLevel: "medium",
+//     crowdColor: "yellow"
+//   }
+// ];
 // Icon components as simple SVG replacements
 const SearchIcon = () => (
   <Text style={{ fontSize: 20, color: '#999' }}>🔍</Text>
@@ -150,6 +153,78 @@ const FamilyIcon = () => (
 );
 
 function HomeScreen() {
+  const [placesData, setPlacesData] = useState<any[]>([]);
+
+
+
+  const getUserFromStorage = async () => {
+  try {
+    const jsonValue = await AsyncStorage.getItem('user');
+    if (jsonValue != null) {
+      return JSON.parse(jsonValue);
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching user from AsyncStorage:', error);
+    return null;
+  }
+};
+
+// Function to fetch preferred places for current user
+ const getPreferredPlaces = async () => {
+  try {
+    
+    // 1️⃣ Get user from AsyncStorage
+    const uid = auth.currentUser?.uid
+    console.log('Current User UID:', uid);
+    if (!uid) {
+      console.warn('User not found');
+      return [];
+    }
+
+    // 2️⃣ Create Firestore query
+    const preferredPlacesRef = collection(db, 'prefered_places');
+    const q = query(preferredPlacesRef, where('userId', '==', uid));
+
+    // 3️⃣ Execute query
+    const querySnapshot = await getDocs(q);
+
+    // 4️⃣ Map results
+    const preferredPlaces = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    //
+
+    console.log('Fetched preferred places:', preferredPlaces);
+    return preferredPlaces;
+  } catch (error) {
+    console.error('Error fetching preferred places:', error);
+    return [];
+  }
+};
+
+
+
+ useFocusEffect(
+    useCallback(() => {
+      const fetchPlaces = async () => {
+    const places = await getPreferredPlaces();
+    console.log('Preferred Places:', places);
+    setPlacesData(places);
+    // You can set these places to state if needed
+  };
+
+  fetchPlaces();
+
+      // optional cleanup when screen goes out of focus
+      return () => {
+        console.log('🚫 Screen unfocused');
+      };
+    }, []))
+
+
   // Helper function to get tag background color
   const getTagBgColor = (color:any) => {
     const colors = {
@@ -203,10 +278,12 @@ function HomeScreen() {
             <Text className="text-xs text-gray-600 mt-1">Farmagudi, Goa</Text>
           </View>
           <View className="flex-row gap-4">
-            <Text className="text-lg">📅</Text>
+            <Text className="text-lg">
+              
+            </Text>
             <Text className="text-lg">🔍</Text>
             <Text className="text-lg">🔔</Text>
-            <Text className="text-lg">👤</Text>
+            <Text onPress={() => {auth.signOut(); navigation.navigate('SignIn');}} className="text-lg">👤</Text>
           </View>
         </View>
         
@@ -229,7 +306,9 @@ function HomeScreen() {
             <Text className="text-base">🧭</Text>
             <Text className="text-white font-semibold ml-2">Discover</Text>
           </TouchableOpacity>
-          <TouchableOpacity className="bg-white rounded-full px-5 py-2.5 mr-2 flex-row items-center border border-gray-200">
+          <TouchableOpacity 
+          onPress={() => navigation.navigate('preference')}
+          className="bg-white rounded-full px-5 py-2.5 mr-2 flex-row items-center border border-gray-200">
             <Text className="text-base">👥</Text>
             <Text className="text-gray-600 font-semibold ml-2">Crowd</Text>
           </TouchableOpacity>

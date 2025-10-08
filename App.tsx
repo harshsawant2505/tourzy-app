@@ -15,6 +15,7 @@ import SignUpScreen from './screens/SignUpScreen';
 import SignInScreen from './screens/SignInScreen';
 
 import DetailScreen from './screens/PlaceDetails';
+import PreferenceScreen from './screens/PreferenceScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -24,7 +25,7 @@ function App() {
 
   useEffect(() => {
     console.log('App.js mounted');
-    importPlacesToFirestore()
+    
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       console.log('User:', user);
@@ -63,7 +64,7 @@ function App() {
             <Stack.Screen name="detail" component={DetailScreen} />  
           
             <Stack.Screen name="Home" component={HomeScreen} />
-           
+           <Stack.Screen name="preference" component={PreferenceScreen} />
             <Stack.Screen name="SignIn" component={SignInScreen} />
             <Stack.Screen name="SignUp" component={SignUpScreen} />
           
@@ -76,6 +77,9 @@ function App() {
             }}>
             <Stack.Screen name="SignIn" component={SignInScreen} />
             <Stack.Screen name="SignUp" component={SignUpScreen} />
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="preference" component={PreferenceScreen} />
+            <Stack.Screen name="detail" component={DetailScreen} />
             {/* <Stack.Screen name="ActivityScreen" component={ActivityScreen} /> */}
           </Stack.Navigator>
         )}

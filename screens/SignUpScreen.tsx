@@ -26,12 +26,11 @@ import { addDoc, collection } from 'firebase/firestore';
           uid: auth.currentUser?.uid,
           name: name,
           email: auth.currentUser?.email,
-          points: 0,
-          quiz: {
-            score: 0
-          },
+        
         });
         console.log("Document written with ID: ", docRef.id);
+
+        
       } catch (e) {
         console.error("Error adding document: ", e);
       }
@@ -53,7 +52,7 @@ import { addDoc, collection } from 'firebase/firestore';
 
         if(user){
           getData()
-          navigation.navigate('ActivityScreen');
+          navigation.navigate('preference');
         }
         console.log(user);
       }).catch((error:any) => {

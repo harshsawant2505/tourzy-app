@@ -5,6 +5,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import HiddenPlaces from "./screens/HiddenPlaces"
+
 // Firebase and authentication
 import { auth } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -62,7 +64,7 @@ function App() {
             }}>
           
             <Stack.Screen name="detail" component={DetailScreen} />  
-          
+          <Stack.Screen name = "hidden" component={HiddenPlaces} />
             <Stack.Screen name="Home" component={HomeScreen} />
            <Stack.Screen name="preference" component={PreferenceScreen} />
             <Stack.Screen name="SignIn" component={SignInScreen} />

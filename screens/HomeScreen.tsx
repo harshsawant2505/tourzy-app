@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, TextInput, ImageBackground, StatusBar, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/core';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons, MaterialIcons, FontAwesome5, Feather } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 
 // const placesData = [
 //   {
@@ -79,83 +82,215 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 //     crowdColor: "yellow"
 //   }
 // ];
-// Icon components as simple SVG replacements
+// Professional Icon components using @expo/vector-icons
 const SearchIcon = () => (
-  <Text style={{ fontSize: 20, color: '#999' }}>🔍</Text>
+  <Ionicons name="search" size={20} color="#999" />
 );
 
 const FilterIcon = () => (
-  <Text style={{ fontSize: 18, color: '#666' }}>⚙️</Text>
+  <Ionicons name="options-outline" size={18} color="#666" />
 );
 
 const CalendarIcon = () => (
-  <Text style={{ fontSize: 18, color: '#666' }}>📅</Text>
+  <Ionicons name="calendar-outline" size={18} color="#666" />
 );
 
 const BellIcon = () => (
-  <Text style={{ fontSize: 20, color: '#666' }}>🔔</Text>
+  <Ionicons name="notifications-outline" size={20} color="#666" />
 );
 
 const UserIcon = () => (
-  <Text style={{ fontSize: 20, color: '#666' }}>👤</Text>
+  <Ionicons name="person-outline" size={20} color="#666" />
 );
 
 const BackIcon = () => (
-  <Text style={{ fontSize: 24, color: '#000' }}>←</Text>
+  <Ionicons name="arrow-back" size={24} color="#000" />
 );
 
 const ShareIcon = () => (
-  <Text style={{ fontSize: 20, color: '#000' }}>↗️</Text>
+  <Ionicons name="share-outline" size={20} color="#000" />
 );
 
 const HeartIcon = ({ filled }:any) => (
-  <Text style={{ fontSize: 24, color: filled ? '#ff0000' : '#000' }}>{filled ? '❤️' : '🤍'}</Text>
+  <Ionicons 
+    name={filled ? "heart" : "heart-outline"} 
+    size={24} 
+    color={filled ? "#ff0000" : "#000"} 
+  />
 );
 
 const StarIcon = () => (
-  <Text style={{ fontSize: 14, color: '#FFD700' }}>⭐</Text>
+  <Ionicons name="star" size={14} color="#FFD700" />
 );
 
 const TrendingIcon = () => (
-  <Text style={{ fontSize: 24, color: '#3B82F6' }}>📈</Text>
+  <Ionicons name="trending-up" size={24} color="#3B82F6" />
 );
 
 const SavedIcon = () => (
-  <Text style={{ fontSize: 24, color: '#10B981' }}>💾</Text>
+  <Ionicons name="bookmark" size={24} color="#10B981" />
 );
 
 const VisitedIcon = () => (
-  <Text style={{ fontSize: 24, color: '#8B5CF6' }}>📍</Text>
+  <Ionicons name="location" size={24} color="#8B5CF6" />
 );
 
 const DirectionsIcon = () => (
-  <Text style={{ fontSize: 18, color: '#fff' }}>🧭</Text>
+  <Ionicons name="navigate" size={18} color="#fff" />
 );
 
 const ClockIcon = () => (
-  <Text style={{ fontSize: 18, color: '#666' }}>🕐</Text>
+  <Ionicons name="time-outline" size={18} color="#666" />
 );
 
 const WifiIcon = () => (
-  <Text style={{ fontSize: 18, color: '#10B981' }}>📶</Text>
+  <Ionicons name="wifi" size={18} color="#10B981" />
 );
 
 const ParkingIcon = () => (
-  <Text style={{ fontSize: 18, color: '#EF4444' }}>🅿️</Text>
+  <MaterialIcons name="local-parking" size={18} color="#EF4444" />
 );
 
 const CardIcon = () => (
-  <Text style={{ fontSize: 18, color: '#3B82F6' }}>💳</Text>
+  <Ionicons name="card-outline" size={18} color="#3B82F6" />
 );
 
 const FamilyIcon = () => (
-  <Text style={{ fontSize: 18, color: '#8B5CF6' }}>👨‍👩‍👧‍👦</Text>
+  <Ionicons name="people" size={18} color="#8B5CF6" />
 );
+
+// Enhanced image selection for places (similar to SmartItinerary)
+const getStaticPlaceImage = (place: any, index: number) => {
+  // If place already has a valid image URL, use it
+  // if (place.image && place.image.trim() !== '' && place.image.startsWith('http')) {
+  //   return place.image;
+  // }
+
+  const placeName = place.name?.toLowerCase() || '';
+  const placeTag = place.tag?.toLowerCase() || '';
+  const description = place.description?.toLowerCase() || '';
+  
+  // Beach/Coastal images
+  if (placeName.includes('beach') || placeName.includes('sunset') || placeTag.includes('beach') || placeTag.includes('coastal')) {
+    return 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&q=80';
+  }
+  
+  // Fort/Heritage/Historical
+  if (placeName.includes('fort') || placeName.includes('church') || placeName.includes('cathedral') || 
+      placeTag.includes('heritage') || placeTag.includes('historical') || description.includes('fort')) {
+    return 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=800&q=80';
+  }
+  
+  // Temple/Religious
+  if (placeName.includes('temple') || placeName.includes('mosque') || placeName.includes('shrine') ||
+      placeTag.includes('religious') || placeTag.includes('spiritual')) {
+    return 'https://images.unsplash.com/photo-1609920658906-8223bd289001?w=800&q=80';
+  }
+  
+  // Food/Restaurant/Cafe
+  if (placeName.includes('restaurant') || placeName.includes('cafe') || placeName.includes('food') ||
+      placeTag.includes('food') || placeTag.includes('restaurant') || placeTag.includes('cafe')) {
+    const foodImages = [
+      'https://images.unsplash.com/photo-1533920379810-6bedac961555?w=800&q=80',
+      'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&q=80',
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80',
+    ];
+    return foodImages[index % foodImages.length];
+  }
+  
+  // Waterfall/Nature
+  if (placeName.includes('falls') || placeName.includes('waterfall') || placeName.includes('river')) {
+    return 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?w=800&q=80';
+  }
+  
+  // Adventure/Trekking/Kayaking
+  if (placeName.includes('trek') || placeName.includes('kayak') || placeName.includes('island') || placeName.includes('adventure') ||
+      placeTag.includes('adventure') || placeTag.includes('nature') || placeTag.includes('trek')) {
+    return 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80';
+  }
+  
+  // Market/Shopping
+  if (placeName.includes('market') || placeName.includes('bazaar') || placeName.includes('shopping')) {
+    return 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80';
+  }
+  
+  // Wildlife/Safari
+  if (placeName.includes('wildlife') || placeName.includes('safari') || placeName.includes('sanctuary')) {
+    return 'https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=800&q=80';
+  }
+  
+  // Architecture
+  if (placeTag.includes('architecture') || description.includes('architecture')) {
+    return 'https://images.unsplash.com/photo-1564399579883-451a5d44ec08?w=800&q=80';
+  }
+  
+  // Default scenic images array
+  const defaultImages = [
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80', // Scenic mountain
+    'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&q=80', // Beach
+    'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80', // Nature
+    'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=800&q=80', // Heritage
+    'https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?w=800&q=80', // Landscape
+    'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=80', // Lake
+  ];
+  
+  return defaultImages[index % defaultImages.length];
+};
 
 function HomeScreen() {
   const [placesData, setPlacesData] = useState<any[]>([]);
+  const [filteredPlaces, setFilteredPlaces] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentLocation, setCurrentLocation] = useState<string>('Loading...');
+  const [locationLoading, setLocationLoading] = useState(true);
 
 
+
+  // Get current location
+  const getCurrentLocation = async () => {
+    try {
+      setLocationLoading(true);
+      
+      // Request location permissions
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      
+      if (status !== 'granted') {
+        setCurrentLocation('Goa, India');
+        setLocationLoading(false);
+        return;
+      }
+
+      // Get current position
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      // Reverse geocode to get address
+      const reverseGeocode = await Location.reverseGeocodeAsync({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+
+      if (reverseGeocode.length > 0) {
+        const address = reverseGeocode[0];
+        const locationString = [
+          address.city || address.subregion,
+          address.region || address.country,
+        ]
+          .filter(Boolean)
+          .join(', ');
+        
+        setCurrentLocation(locationString || 'Goa, India');
+      } else {
+        setCurrentLocation('Goa, India');
+      }
+    } catch (error) {
+      console.error('Error getting location:', error);
+      setCurrentLocation('Goa, India');
+    } finally {
+      setLocationLoading(false);
+    }
+  };
 
   const getUserFromStorage = async () => {
   try {
@@ -189,13 +324,20 @@ function HomeScreen() {
     // 3️⃣ Execute query
     const querySnapshot = await getDocs(q);
 
-    // 4️⃣ Map results
-    const preferredPlaces = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    //
+    // 4️⃣ Map results and add static images
+    const preferredPlaces = querySnapshot.docs.map((doc, index) => {
+      const placeData: any = {
+        id: doc.id,
+        ...doc.data(),
+      };
+      
+      // Ensure each place has an image
+      if (!placeData.image || placeData.image.trim() === '') {
+        placeData.image = getStaticPlaceImage(placeData, index);
+      }
+      
+      return placeData;
+    });
 
     console.log('Fetched preferred places:', preferredPlaces);
     return preferredPlaces;
@@ -207,12 +349,18 @@ function HomeScreen() {
 
 
 
+ // Get location on mount
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
  useFocusEffect(
     useCallback(() => {
       const fetchPlaces = async () => {
     const places = await getPreferredPlaces();
     console.log('Preferred Places:', places);
     setPlacesData(places);
+    setFilteredPlaces(places);
     // You can set these places to state if needed
   };
 
@@ -224,10 +372,26 @@ function HomeScreen() {
       };
     }, []))
 
+  // Filter places when search query changes
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredPlaces(placesData);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = placesData.filter(place =>
+        place.name?.toLowerCase().includes(query) ||
+        place.location?.toLowerCase().includes(query) ||
+        place.tag?.toLowerCase().includes(query) ||
+        place.description?.toLowerCase().includes(query)
+      );
+      setFilteredPlaces(filtered);
+    }
+  }, [searchQuery, placesData]);
+
 
   // Helper function to get tag background color
   const getTagBgColor = (color:any) => {
-    const colors = {
+    const colors: any = {
       green: 'bg-green-50',
       yellow: 'bg-yellow-50',
       blue: 'bg-blue-50',
@@ -239,7 +403,7 @@ function HomeScreen() {
 
   // Helper function to get tag text color
   const getTagTextColor = (color:any) => {
-    const colors = {
+    const colors: any = {
       green: 'text-green-600',
       yellow: 'text-yellow-900',
       blue: 'text-blue-600',
@@ -251,7 +415,7 @@ function HomeScreen() {
 
   // Helper function to get crowd dot color
   const getCrowdDotColor = (color:any) => {
-    const colors = {
+    const colors: any = {
       green: 'bg-green-500',
       yellow: 'bg-yellow-500',
       red: 'bg-red-500',
@@ -260,133 +424,420 @@ function HomeScreen() {
     return colors[color] || 'bg-gray-500';
   };
 
-  const navigation = useNavigation()
+  const navigation = useNavigation<any>()
+
+  // Split places into different sections
+  const featuredPlace = filteredPlaces[0];
+  const gridPlaces = filteredPlaces.slice(1, 3);
+  const listPlaces = filteredPlaces.slice(3);
 
   return (
-    <ScrollView className="flex-1 bg-gray-50 pt-7">
+    <View className="flex-1 bg-gray-50">
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
       {/* Header */}
-      <View className="bg-white px-5 pt-3 pb-5">
+      <View className="bg-white px-5 pt-7 pb-5 shadow-sm">
         <View className="flex-row justify-between items-center mb-5">
           <View>
-            <View className="flex-row">
-              <Text className="text-2xl font-bold text-blue-500">TO</Text>
+            <View className="flex-row items-center">
+              {/* <Text className="text-2xl font-bold text-blue-500">TO</Text>
               <Text className="text-2xl font-bold text-green-500">U</Text>
               <Text className="text-2xl font-bold text-red-500">R</Text>
               <Text className="text-2xl font-bold text-purple-500">Z</Text>
-              <Text className="text-2xl font-bold text-yellow-500">Y</Text>
+              <Text className="text-2xl font-bold text-yellow-500">Y</Text> */}
+              <Image 
+                source={require('../assets/tourzy-logo.png')}
+                style={{ width: 100, height: 20 }}
+              />
             </View>
-            <Text className="text-xs text-gray-600 mt-1">Farmagudi, Goa</Text>
+            <View className="flex-row items-center mt-1">
+              <Ionicons name="location" size={12} color="#666" style={{ marginRight: 2 }} />
+              {locationLoading ? (
+                <View className="flex-row items-center">
+                  <ActivityIndicator size="small" color="#666" />
+                  <Text className="text-xs text-gray-600 ml-1">Getting location...</Text>
+                </View>
+              ) : (
+                <Text className="text-xs text-gray-600">{currentLocation}</Text>
+              )}
+            </View>
           </View>
-          <View className="flex-row gap-4">
-            <Text className="text-lg">
-              
-            </Text>
-            <Text className="text-lg">🔍</Text>
-            <Text className="text-lg">🔔</Text>
-            <Text onPress={() => {auth.signOut(); navigation.navigate('SignIn');}} className="text-lg">👤</Text>
+          <View className="flex-row gap-3 items-center">
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('social')}
+              className="w-10 h-10 bg-purple-100 rounded-full items-center justify-center">
+              <Ionicons name="images-outline" size={20} color="#8b5cf6" />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('Profile')}
+              className="w-10 h-10 bg-blue-500 rounded-full items-center justify-center shadow-md"
+            >
+              <Ionicons name="person-outline" size={18} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={() => {
+                auth.signOut().then(() => navigation.navigate('userLogin'));
+              }}
+              className="w-10 h-10 bg-red-100 rounded-full items-center justify-center">
+              <Ionicons name="log-out-outline" size={20} color="#ef4444" />
+            </TouchableOpacity>
           </View>
         </View>
         
         {/* Search Bar */}
         <View className="flex-row gap-2">
-          <View className="flex-1 flex-row items-center bg-gray-100 rounded-lg px-4 py-3">
-            <Text className="text-lg">🔍</Text>
-            <Text className="ml-2 text-gray-400 text-sm">Search for places, experiences...</Text>
+          <View className="flex-1 flex-row items-center bg-gray-100 rounded-xl px-4 py-3.5">
+            <Ionicons name="search" size={18} color="#999" />
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Discover amazing places..."
+              placeholderTextColor="#9ca3af"
+              className="flex-1 ml-2 text-gray-900"
+            />
+            {searchQuery ? (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color="#999" />
+              </TouchableOpacity>
+            ) : null}
           </View>
-          <TouchableOpacity className="bg-gray-100 rounded-lg px-4 justify-center items-center">
-            <Text className="text-base">⚙️</Text>
-          </TouchableOpacity>
+          {/* <TouchableOpacity className="bg-blue-500 rounded-xl px-4 justify-center items-center shadow-md">
+            <Ionicons name="options-outline" size={18} color="#fff" />
+          </TouchableOpacity> */}
         </View>
       </View>
 
       {/* Tabs */}
-      <View className="bg-white mt-2 py-4">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-2">
-          <TouchableOpacity className="bg-blue-500 rounded-full px-5 py-2.5 mr-2 flex-row items-center">
-            <Text className="text-base">🧭</Text>
-            <Text className="text-white font-semibold ml-2">Discover</Text>
+      <View className="bg-white mt-1 py-4 shadow-sm">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-3">
+          <TouchableOpacity className="bg-blue-500 rounded-full px-5 py-2.5 mr-2 flex-row items-center shadow-md">
+            <Ionicons name="compass" size={18} color="#fff" />
+            <Text className="text-white font-bold ml-2">Discover</Text>
           </TouchableOpacity>
           <TouchableOpacity 
-          onPress={() => navigation.navigate('preference')}
+          onPress={() => navigation.navigate('crowd')}
           className="bg-white rounded-full px-5 py-2.5 mr-2 flex-row items-center border border-gray-200">
-            <Text className="text-base">👥</Text>
-            <Text className="text-gray-600 font-semibold ml-2">Crowd</Text>
+            <Ionicons name="people-outline" size={18} color="#666" />
+            <Text className="text-gray-700 font-semibold ml-2">Crowd</Text>
           </TouchableOpacity>
-          <TouchableOpacity className="bg-white rounded-full px-5 py-2.5 mr-2 flex-row items-center border border-gray-200">
-            <Text className="text-base">💰</Text>
-            <Text className="text-gray-600 font-semibold ml-2">Prices</Text>
+          <TouchableOpacity 
+          onPress={() => navigation.navigate('priceGuide')}
+          className="bg-white rounded-full px-5 py-2.5 mr-2 flex-row items-center border border-gray-200">
+            <Ionicons name="wallet-outline" size={18} color="#666" />
+            <Text className="text-gray-700 font-semibold ml-2">Prices</Text>
           </TouchableOpacity>
-          <TouchableOpacity className="bg-white rounded-full px-5 py-2.5 mr-2 flex-row items-center border border-gray-200">
-            <Text className="text-base">💎</Text>
-            <Text className="text-gray-600 font-semibold ml-2">Hidden</Text>
+          <TouchableOpacity 
+          onPress={() => navigation.navigate('hidden')}
+          className="bg-white rounded-full px-5 py-2.5 mr-2 flex-row items-center border border-gray-200">
+            <Ionicons name="diamond-outline" size={18} color="#666" />
+            <Text className="text-gray-700 font-semibold ml-2">Hidden</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
 
-      {/* Stats Cards */}
-      <View className="flex-row px-5 py-4 gap-2">
-        <View className="flex-1 bg-blue-50 rounded-xl p-4 items-center">
-          <Text className="text-2xl">📈</Text>
-          <Text className="text-blue-600 font-semibold text-sm mt-2">Trending</Text>
-          <Text className="text-blue-900 font-bold text-base mt-1">12 spots</Text>
-        </View>
-        <View className="flex-1 bg-green-50 rounded-xl p-4 items-center">
-          <Text className="text-2xl">💾</Text>
-          <Text className="text-green-600 font-semibold text-sm mt-2">Saved</Text>
-          <Text className="text-green-900 font-bold text-base mt-1">8 places</Text>
-        </View>
-        <View className="flex-1 bg-purple-50 rounded-xl p-4 items-center">
-          <Text className="text-2xl">📍</Text>
-          <Text className="text-purple-600 font-semibold text-sm mt-2">Visited</Text>
-          <Text className="text-purple-900 font-bold text-base mt-1">15 places</Text>
+      {/* Quick Stats Banner */}
+      <View className="px-5 pt-5 pb-3">
+        <View className="bg-blue-600 rounded-2xl p-4 shadow-lg" style={{ position: 'relative' }}>
+          <LinearGradient
+            colors={['#2563eb', '#7c3aed']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 16 }}
+          />
+          <View className="flex-row items-center mb-4 justify-between">
+            <View className="flex-1 flex-row items-center">
+              <Ionicons name="stats-chart" size={22} color="#fff" style={{ marginRight: 8 }} />
+              <View>
+                <Text className="text-white text-lg font-bold mb-1">Your Adventure Stats</Text>
+                <Text className="text-white/80 text-xs">Track your exploration journey</Text>
+              </View>
+            </View>
+          </View>
+          
+          <View className="flex-row mt-4 gap-3">
+            <View className="flex-1 bg-white/20 rounded-xl p-3 items-center">
+              <Text className="text-white text-2xl font-bold">{filteredPlaces.length}</Text>
+              <Text className="text-white/90 text-xs mt-1">{searchQuery ? 'Found' : 'For You'}</Text>
+            </View>
+            <View className="flex-1 bg-white/20 rounded-xl p-3 items-center">
+              <Text className="text-white text-2xl font-bold">{placesData.length}</Text>
+              <Text className="text-white/90 text-xs mt-1">Total</Text>
+            </View>
+            <View className="flex-1 bg-white/20 rounded-xl p-3 items-center">
+              <Text className="text-white text-2xl font-bold">8</Text>
+              <Text className="text-white/90 text-xs mt-1">Saved</Text>
+            </View>
+          </View>
         </View>
       </View>
 
-      {/* Personalized Section */}
+      {/* Quick Categories */}
       <View className="px-5 py-3">
-        <Text className="text-lg font-bold text-black mb-4">Personalized for you</Text>
-        
-        {/* Map over places */}
-        {placesData.map((place) => (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-3">
           <TouchableOpacity 
-            key={place.id}
-            onPress={() => navigation.navigate('detail', { place })}
-            className="bg-white rounded-2xl p-4 mb-4 shadow-md"
+            onPress={() => navigation.navigate('itinerary')}
+            className="bg-blue-600 rounded-2xl p-4 items-center shadow-md" style={{ width: 100 }}>
+            <View className="w-12 h-12 bg-white/30 rounded-full items-center justify-center mb-2">
+              <Ionicons name="calendar" size={24} color="#fff" />
+            </View>
+            <Text className="text-white text-xs font-bold">Itinerary</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('stores')}
+            className="bg-amber-500 rounded-2xl p-4 items-center shadow-md" style={{ width: 100 }}>
+            <View className="w-12 h-12 bg-white/30 rounded-full items-center justify-center mb-2">
+              <Ionicons name="storefront" size={24} color="#fff" />
+            </View>
+            <Text className="text-white text-xs font-bold">Stores</Text>
+          </TouchableOpacity>
+
+          
+          <TouchableOpacity
+          onPress={() => navigation.navigate('social')}
+          className="bg-green-500 rounded-2xl p-4 items-center shadow-md" style={{ width: 100 }}>
+            <View className="w-12 h-12 bg-white/30 rounded-full items-center justify-center mb-2">
+              <FontAwesome5 name="landmark" size={20} color="#fff" />
+            </View>
+            <Text className="text-white text-xs font-bold">Community</Text>
+          </TouchableOpacity>
+          
+     
+          
+         
+        </ScrollView>
+      </View>
+
+      {/* Featured Place - Hero Card */}
+      {featuredPlace && (
+        <View className="px-5 pt-4 pb-3">
+          <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-row items-center">
+              <Ionicons name="sparkles" size={20} color="#FFD700" style={{ marginRight: 6 }} />
+              <Text className="text-xl font-bold text-gray-900">Featured for You</Text>
+            </View>
+            {/* <TouchableOpacity>
+              <Text className="text-blue-500 text-sm font-semibold">See all</Text>
+            </TouchableOpacity> */}
+          </View>
+          
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('detail', { place: featuredPlace })}
+            className="rounded-3xl overflow-hidden shadow-2xl"
+            activeOpacity={0.95}
           >
-            <View className="flex-row gap-4">
-              <Image 
-                source={{ uri: place.image }}
-                className="w-20 h-20 rounded-xl"
-              />
-              <View className="flex-1">
-                <View className="flex-row justify-between items-start">
-                  <View className="flex-1">
-                    <Text className="text-base font-bold text-black">{place.name}</Text>
-                    <Text className="text-xs text-gray-600 mt-0.5">{place.location}</Text>
+            <ImageBackground
+              source={{ uri: getStaticPlaceImage(featuredPlace, 0) }}
+              className="h-64"
+              imageStyle={{ borderRadius: 24 }}
+              resizeMode="cover"
+            >
+              <LinearGradient
+                colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.8)']}
+                style={{ flex: 1, justifyContent: 'space-between', padding: 20 }}
+              >
+                {/* Top badges */}
+                <View className="flex-row items-center justify-between">
+                  <View className={`${getTagBgColor(featuredPlace.tagColor)} rounded-full px-3 py-1.5`}>
+                    <Text className={`text-xs font-bold ${getTagTextColor(featuredPlace.tagColor)}`}>
+                      {featuredPlace.tag}
+                    </Text>
                   </View>
-                  <View className="flex-row items-center gap-1">
-                    <Text className="text-sm">⭐</Text>
-                    <Text className="text-sm font-bold text-black">{place.rating}</Text>
+                  
+                  <View className="bg-black/50 rounded-xl px-3 py-1.5 flex-row items-center">
+                    <Ionicons name="star" size={14} color="#FFD700" />
+                    <Text className="text-white text-sm font-bold ml-1">{featuredPlace.rating}</Text>
                   </View>
                 </View>
-                <Text className="text-xs text-gray-600 mt-1.5 leading-4">{place.description}</Text>
-              </View>
-            </View>
-            <View className="flex-row items-center gap-3 mt-3">
-              <View className={`${getTagBgColor(place.tagColor)} px-3 py-1.5 rounded-xl`}>
-                <Text className={`text-xs font-semibold ${getTagTextColor(place.tagColor)}`}>
-                  {place.tag}
-                </Text>
-              </View>
-              <View className="flex-row items-center gap-1.5">
-                <View className={`w-2 h-2 rounded-full ${getCrowdDotColor(place.crowdColor)}`} />
-                <Text className="text-xs text-gray-600">{place.crowdLevel} crowd</Text>
-              </View>
-            </View>
+
+                {/* Bottom info */}
+                <View>
+                  <Text className="text-white text-2xl font-bold mb-1">{featuredPlace.name}</Text>
+                  <View className="flex-row items-center mb-3">
+                    <Ionicons name="location" size={14} color="rgba(255,255,255,0.9)" style={{ marginRight: 4 }} />
+                    <Text className="text-white/90 text-sm">{featuredPlace.location}</Text>
+                  </View>
+                  
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center bg-white/20 rounded-lg px-3 py-2">
+                      <View className={`w-2 h-2 rounded-full ${getCrowdDotColor(featuredPlace.crowdColor)} mr-2`} />
+                      <Text className="text-white text-xs font-medium">{featuredPlace.crowdLevel} crowd</Text>
+                    </View>
+                    
+                    <TouchableOpacity className="bg-white rounded-xl px-5 py-2.5 shadow-md">
+                      <Text className="text-blue-600 text-sm font-bold">Explore →</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </LinearGradient>
+            </ImageBackground>
           </TouchableOpacity>
-        ))}
-      </View>
+        </View>
+      )}
+
+      {/* Grid Layout - Two Cards */}
+      {gridPlaces.length >= 2 && (
+        <View className="px-5 pt-3 pb-3">
+          <View className="flex-row items-center mb-3">
+            <Ionicons name="map" size={20} color="#1f2937" style={{ marginRight: 6 }} />
+            <Text className="text-xl font-bold text-gray-900">Explore More</Text>
+          </View>
+          
+          <View className="flex-row gap-3">
+            {gridPlaces.map((place, index) => (
+              <TouchableOpacity
+                key={place.id}
+                onPress={() => navigation.navigate('detail', { place })}
+                className="flex-1 rounded-2xl overflow-hidden shadow-lg"
+                activeOpacity={0.9}
+              >
+                <ImageBackground
+                  source={{ uri: getStaticPlaceImage(place, index + 1) }}
+                  className="h-48"
+                  imageStyle={{ borderRadius: 16 }}
+                  resizeMode="cover"
+                >
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.85)']}
+                    style={{ flex: 1, justifyContent: 'space-between', padding: 12 }}
+                  >
+                    {/* Tag */}
+                    <View className="self-start">
+                      <View className={`${getTagBgColor(place.tagColor)} rounded-full px-2.5 py-1`}>
+                        <Text className={`text-xs font-bold ${getTagTextColor(place.tagColor)}`}>
+                          {place.tag}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Info */}
+                    <View>
+                      <Text className="text-white text-base font-bold mb-1">{place.name}</Text>
+                      <View className="flex-row items-center justify-between">
+                        <View className="bg-white/20 rounded-lg px-2 py-1 flex-row items-center">
+                          <Ionicons name="star" size={12} color="#FFD700" />
+                          <Text className="text-white text-xs font-bold ml-1">{place.rating}</Text>
+                        </View>
+                        <View className="flex-row items-center">
+                          <View className={`w-1.5 h-1.5 rounded-full ${getCrowdDotColor(place.crowdColor)} mr-1`} />
+                          <Text className="text-white text-xs">{place.crowdLevel}</Text>
+                        </View>
+                      </View>
+                    </View>
+                  </LinearGradient>
+                </ImageBackground>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* List Layout - Rest of the places */}
+      {listPlaces.length > 0 && (
+        <View className="px-5 pt-3 pb-6">
+          <View className="flex-row items-center mb-3">
+            <Ionicons name="location" size={20} color="#1f2937" style={{ marginRight: 6 }} />
+            <Text className="text-xl font-bold text-gray-900">All Recommendations</Text>
+          </View>
+          
+          {listPlaces.map((place, index) => (
+            <TouchableOpacity 
+              key={place.id}
+              onPress={() => navigation.navigate('detail', { place })}
+              className="bg-white rounded-2xl mb-3 overflow-hidden shadow-lg"
+              activeOpacity={0.95}
+            >
+              <View className="flex-row">
+                <ImageBackground
+                  source={{ uri: getStaticPlaceImage(place, index + 3) }}
+                  className="w-32 h-32"
+                  imageStyle={{ borderTopLeftRadius: 16, borderBottomLeftRadius: 16 }}
+                  resizeMode="cover"
+                >
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.6)']}
+                    style={{ flex: 1, justifyContent: 'flex-end', padding: 8 }}
+                  >
+                    <View className="bg-white/90 rounded-lg px-2 py-1 self-start flex-row items-center">
+                      <Ionicons name="star" size={12} color="#FFD700" />
+                      <Text className="text-xs font-bold ml-1">{place.rating}</Text>
+                    </View>
+                  </LinearGradient>
+                </ImageBackground>
+                
+                <View className="flex-1 p-3 justify-between">
+                  <View>
+                    <Text className="text-base font-bold text-gray-900 mb-1">{place.name}</Text>
+                    <View className="flex-row items-center mb-2">
+                      <Ionicons name="location" size={12} color="#666" style={{ marginRight: 2 }} />
+                      <Text className="text-xs text-gray-600">{place.location}</Text>
+                    </View>
+                    <Text className="text-xs text-gray-500 leading-4" numberOfLines={2}>
+                      {place.description}
+                    </Text>
+                  </View>
+                  
+                  <View className="flex-row items-center gap-2 mt-2">
+                    <View className={`${getTagBgColor(place.tagColor)} px-2.5 py-1 rounded-lg`}>
+                      <Text className={`text-xs font-semibold ${getTagTextColor(place.tagColor)}`}>
+                        {place.tag}
+                      </Text>
+                    </View>
+                    <View className="flex-row items-center">
+                      <View className={`w-1.5 h-1.5 rounded-full ${getCrowdDotColor(place.crowdColor)} mr-1`} />
+                      <Text className="text-xs text-gray-600">{place.crowdLevel}</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {/* Empty State */}
+      {placesData.length === 0 && (
+        <View className="px-5 py-12 items-center">
+          <View className="w-24 h-24 bg-gray-100 rounded-full items-center justify-center mb-4">
+            <Ionicons name="map-outline" size={48} color="#999" />
+          </View>
+          <Text className="text-gray-900 text-xl font-bold mb-2">No Places Yet</Text>
+          <Text className="text-gray-600 text-sm text-center mb-6">
+            Set your preferences to get personalized recommendations
+          </Text>
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('preference')}
+            className="bg-blue-500 rounded-full px-6 py-3 shadow-md flex-row items-center"
+          >
+            <Text className="text-white text-sm font-bold mr-2">Set Preferences</Text>
+            <Ionicons name="settings" size={16} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* No Search Results */}
+      {placesData.length > 0 && filteredPlaces.length === 0 && searchQuery && (
+        <View className="px-5 py-12 items-center">
+          <View className="w-24 h-24 bg-gray-100 rounded-full items-center justify-center mb-4">
+            <Ionicons name="search-outline" size={48} color="#999" />
+          </View>
+          <Text className="text-gray-900 text-xl font-bold mb-2">No Results Found</Text>
+          <Text className="text-gray-600 text-sm text-center mb-6">
+            No places match "{searchQuery}". Try a different search term.
+          </Text>
+          <TouchableOpacity 
+            onPress={() => setSearchQuery('')}
+            className="bg-blue-500 rounded-full px-6 py-3 shadow-md"
+          >
+            <Text className="text-white text-sm font-bold">Clear Search</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Bottom Spacing */}
+      <View className="h-6" />
     </ScrollView>
+    </View>
   );
 }
 

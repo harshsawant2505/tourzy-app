@@ -6,6 +6,16 @@ import { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import HiddenPlaces from "./screens/HiddenPlaces"
+import SmartItinerary from "./screens/SmartItinerary"
+import SuggestionsScreen from "./screens/SuggestionsScreen"
+import CrowdAnalysis from "./screens/CrowdAnalysis"
+import UserLogin from "./screens/UserLogin"
+import StoreOwner from "./screens/StoreOwner"
+import StoresGallery from "./screens/StoresGallery"
+import StoreDetail from "./screens/StoreDetail"
+import PriceGuide from "./screens/PriceGuide"
+import Profile from "./screens/Profile"
+import SocialFeed from "./screens/SocialFeed"
 
 // Firebase and authentication
 import { auth } from './firebase';
@@ -64,16 +74,26 @@ function App() {
             }}>
           
             <Stack.Screen name="detail" component={DetailScreen} />  
-          <Stack.Screen name = "hidden" component={HiddenPlaces} />
+          <Stack.Screen name = "Hidden" component={HiddenPlaces} />
+          <Stack.Screen name="itinerary" component={SmartItinerary} />
+          <Stack.Screen name="suggestions" component={SuggestionsScreen} />
+          <Stack.Screen name="crowd" component={CrowdAnalysis} />
             <Stack.Screen name="Home" component={HomeScreen} />
            <Stack.Screen name="preference" component={PreferenceScreen} />
             <Stack.Screen name="SignIn" component={SignInScreen} />
             <Stack.Screen name="SignUp" component={SignUpScreen} />
+            <Stack.Screen name="userLogin" component={UserLogin} />
+            <Stack.Screen name="StoreOwner" component={StoreOwner} />
+            <Stack.Screen name="stores" component={StoresGallery} />
+            <Stack.Screen name="storeDetail" component={StoreDetail} />
+            <Stack.Screen name="priceGuide" component={PriceGuide} />
+            <Stack.Screen name="Profile" component={Profile} />
+            <Stack.Screen name="social" component={SocialFeed} />
           
           </Stack.Navigator>
         ) : (
           <Stack.Navigator
-            initialRouteName="SignUp"
+            initialRouteName="userLogin"
             screenOptions={{
               headerShown: false,
             }}>
@@ -82,6 +102,17 @@ function App() {
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="preference" component={PreferenceScreen} />
             <Stack.Screen name="detail" component={DetailScreen} />
+            <Stack.Screen name="Hidden" component={HiddenPlaces} />
+            <Stack.Screen name="itinerary" component={SmartItinerary} />
+            <Stack.Screen name="suggestions" component={SuggestionsScreen} />
+            <Stack.Screen name="crowd" component={CrowdAnalysis} />
+            <Stack.Screen name="userLogin" component={UserLogin} />
+            <Stack.Screen name="StoreOwner" component={StoreOwner} />
+            <Stack.Screen name="stores" component={StoresGallery} />
+            <Stack.Screen name="storeDetail" component={StoreDetail} />
+            <Stack.Screen name="priceGuide" component={PriceGuide} />
+            <Stack.Screen name="Profile" component={Profile} />
+            <Stack.Screen name="social" component={SocialFeed} />
             {/* <Stack.Screen name="ActivityScreen" component={ActivityScreen} /> */}
           </Stack.Navigator>
         )}

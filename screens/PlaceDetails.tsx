@@ -6,7 +6,7 @@ function DetailScreen({ route }:any) {
 
     console.log(route)
   const [isFavorited, setIsFavorited] = useState(false);
-  const navigation = useNavigation()
+  const navigation = useNavigation<any>()
   
   return (
     <ScrollView className="flex-1 bg-white">
@@ -70,14 +70,14 @@ function DetailScreen({ route }:any) {
 
         {/* Action Buttons */}
         <View className="flex-row gap-3 mb-6">
-          <TouchableOpacity className="flex-1 bg-blue-500 rounded-xl py-3.5 flex-row items-center justify-center gap-2">
+          {/* <TouchableOpacity className="flex-1 bg-blue-500 rounded-xl py-3.5 flex-row items-center justify-center gap-2">
             <Text className="text-base">🧭</Text>
             <Text className="text-white font-semibold text-base">Get Directions</Text>
           </TouchableOpacity>
           <TouchableOpacity className="flex-1 bg-white border border-gray-300 rounded-xl py-3.5 flex-row items-center justify-center gap-2">
             <Text className="text-base">🕐</Text>
             <Text className="text-gray-700 font-semibold text-base">Add to Plan</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         {/* Opening Hours */}

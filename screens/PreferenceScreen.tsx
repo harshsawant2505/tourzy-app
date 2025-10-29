@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, Dimensions, Animated, ActivityIndicator } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { auth, db } from '../firebase';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, getDocs, query, where, deleteDoc, doc } from 'firebase/firestore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -153,8 +153,8 @@ useEffect(() => {
     const response = await data;
     const json = await response.json();
     console.log('Response from server:', json);
+    await uploadPlaces(json.output.places);
     setLoading(false);
-   uploadPlaces(json.output.places);
     navigation.navigate('Home');
   };
 
@@ -162,10 +162,21 @@ useEffect(() => {
 
 
 async function uploadPlaces(places: any[]) {
-    const placesRef = collection(db, "prefered_places"); // collection name
-    const userId = auth.currentUser?.uid; // Replace with actual user id from auth or context
+    const placesRef = collection(db, "prefered_places");
+    const userId = auth.currentUser?.uid;
 
     try {
+        // First, delete all existing preferred places for this user
+        const existingPlacesQuery = query(placesRef, where('userId', '==', userId));
+        const existingPlacesSnapshot = await getDocs(existingPlacesQuery);
+        
+        console.log(`🗑️ Deleting ${existingPlacesSnapshot.docs.length} existing places...`);
+        for (const docSnapshot of existingPlacesSnapshot.docs) {
+            await deleteDoc(doc(db, "prefered_places", docSnapshot.id));
+        }
+        
+        // Then, upload new places
+        console.log(`📤 Uploading ${places.length} new places...`);
         for (const place of places) {
             await addDoc(placesRef, { ...place, userId });
             console.log(`Uploaded: ${place.name}`);

@@ -21,6 +21,7 @@ web-build/
 
 .env
 .env
+.env.local
 # debug
 npm-debug.*
 yarn-debug.*

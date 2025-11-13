@@ -528,7 +528,7 @@ function HomeScreen() {
             <Text className="text-gray-700 font-semibold ml-2">Prices</Text>
           </TouchableOpacity>
           <TouchableOpacity 
-          onPress={() => navigation.navigate('hidden')}
+          onPress={() => navigation.navigate('Hidden')}
           className="bg-white rounded-full px-5 py-2.5 mr-2 flex-row items-center border border-gray-200">
             <Ionicons name="diamond-outline" size={18} color="#666" />
             <Text className="text-gray-700 font-semibold ml-2">Hidden</Text>
